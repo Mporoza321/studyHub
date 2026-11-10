@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StudyHub - Manage Your School Work</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#1d2433;--muted:#5b6478;--accent:#2563eb;--danger:#b91c1c;--border:#cfd6e3;--warn:#92400e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1420;--card:#171e2e;--text:#e8ecf5;--muted:#9aa4b8;--accent:#60a5fa;--danger:#fca5a5;--border:#2a3347;--warn:#fcd34d}}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171e2e;--text:#e8ecf5;--muted:#9aa4b8;--accent:#60a5fa;--danger:#fca5a5;--border:#2a3347;--warn:#fcd34d}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;background-color:var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+h1{margin:0;font-size:1.6rem}
+.sub{margin:4px 0 16px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.grid{grid-template-columns:1fr}}
+label{font-size:.85rem;color:var(--muted);display:block;margin-bottom:4px}
+input,select,textarea,button{font:inherit;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);min-height:44px}
+textarea{min-height:70px;resize:vertical}
+.full{grid-column:1/-1}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border:none;font-weight:600}
+button.ghost{background:transparent;width:auto;padding:6px 10px;min-height:36px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:flex;gap:10px;margin-bottom:16px}
+.stat{flex:1;text-align:center;padding:12px}
+.stat b{display:block;font-size:1.5rem}
+.stat span{font-size:.85rem;color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar select{width:auto;flex:1;min-width:130px}
+.item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.item:last-child{border-bottom:none}
+.item input[type=checkbox]{width:24px;height:24px;min-height:0;margin-top:2px;flex:0 0 24px;accent-color:var(--accent);padding:0}
+.body{flex:1;min-width:0}
+.title{font-weight:600;overflow-wrap:anywhere}
+.title.done{text-decoration:line-through;color:var(--muted)}
+.meta{font-size:.82rem;color:var(--muted);margin-top:2px}
+.overdue{color:var(--danger);font-weight:700}
+.notes{font-size:.9rem;margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}
+.tag{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:0 8px;font-size:.75rem;margin-right:4px}
+.tag.high{border-color:var(--danger);color:var(--danger);font-weight:700}
+.tag.missed{border-color:var(--warn);color:var(--warn);font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:24px 0}
+.msg{font-size:.9rem;color:var(--danger);min-height:1.3em;margin-top:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>StudyHub</h1>
+    <p class="sub">Track assignments, tests, and classes you missed, all in one place. Works on phone and computer.</p>
+  </header>
+
+  <div class="stats" role="region" aria-label="Summary">
+    <div class="card stat"><b id="statOpen">0</b><span>Open</span></div>
+    <div class="card stat"><b id="statWeek">0</b><span>Due in 7 days</span></div>
+    <div class="card stat"><b id="statOver">0</b><span>Overdue</span></div>
+  </div>
+
+  <section class="card" aria-labelledby="addHeading">
+    <h2 id="addHeading" style="margin:0 0 12px;font-size:1.15rem">Add an item</h2>
+    <div class="grid">
+      <div class="full">
+        <label for="fTitle">What is it?</label>
+        <input id="fTitle" placeholder="e.g. Chapter 4 essay, Maths test, Missed: HTML tables" maxlength="120">
+      </div>
+      <div>
+        <label for="fSubject">Subject</label>
+        <input id="fSubject" list="subjectList" placeholder="e.g. Java" maxlength="40">
+        <datalist id="subjectList"></datalist>
+      </div>
+      <div>
+        <label for="fType">Type</label>
+        <select id="fType">
+          <option value="Assignment">Assignment</option>
+          <option value="Test">Test / Exam</option>
+          <option value="Project">Project</option>
+          <option value="Class activity">Class activity</option>
+          <option value="Missed class">Missed class (catch-up)</option>
+        </select>
+      </div>
+      <div>
+        <label for="fDue">Due date</label>
+        <input id="fDue" type="date">
+      </div>
+      <div>
+        <label for="fPri">Priority</label>
+        <select id="fPri">
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="full">
+        <label for="fNotes">Notes or catch-up steps (optional)</label>
+        <textarea id="fNotes" placeholder="e.g. Read pages 40-52, copy the notes from a classmate, submit via email."></textarea>
+      </div>
+      <div class="full">
+        <button class="primary" id="addBtn" type="button">Add item</button>
+        <div class="msg" id="msg" role="alert"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="listHeading">
+    <h2 id="listHeading" style="margin:0 0 12px;font-size:1.15rem">My items</h2>
+    <div class="toolbar">
+      <label class="sr" for="fStatus">Show</label>
+      <select id="fStatus">
+        <option value="open">Open</option>
+        <option value="done">Completed</option>
+        <option value="all">All</option>
+      </select>
+      <label class="sr" for="fSubjFilter">Subject</label>
+      <select id="fSubjFilter"><option value="all">All subjects</option></select>
+    </div>
+    <div id="list" aria-live="polite"></div>
+  </section>
+
+  <p class="sub" style="font-size:.85rem">Your data is saved on this device. Use the same browser to keep your items. Nothing is sent to a server.</p>
+</div>
+
+<script>
+(function () {
+  var KEY = "studyhub-items-v1";
+  var items = [];
+  var view = { status: "open", subject: "all" };
+
+  function load() {
+    try { items = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { items = []; }
+    if (!Array.isArray(items)) items = [];
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { /* storage unavailable: keep in memory */ }
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function todayStr() {
+    var d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+  function plusDays(n) {
+    var d = new Date(todayStr() + "T00:00:00");
+    d.setDate(d.getDate() + n);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function addItem() {
+    var title = document.getElementById("fTitle").value.trim();
+    var msg = document.getElementById("msg");
+    if (!title) { msg.textContent = "Please type a name for the item."; document.getElementById("fTitle").focus(); return; }
+    msg.textContent = "";
+    items.push({
+      id: uid(),
+      title: title,
+      subject: document.getElementById("fSubject").value.trim() || "General",
+      type: document.getElementById("fType").value,
+      due: document.getElementById("fDue").value,
+      priority: document.getElementById("fPri").value,
+      notes: document.getElementById("fNotes").value.trim(),
+      done: false,
+      created: todayStr()
+    });
+    save();
+    ["fTitle", "fNotes", "fDue"].forEach(function (id) { document.getElementById(id).value = ""; });
+    document.getElementById("fPri").value = "normal";
+    document.getElementById("fTitle").focus();
+    render();
+  }
+
+  function toggle(id) {
+    items.forEach(function (it) { if (it.id === id) it.done = !it.done; });
+    save(); render();
+  }
+  function remove(id) {
+    var it = items.filter(function (x) { return x.id === id; })[0];
+    if (!it) return;
+    if (!confirm("Delete \"" + it.title + "\"?")) return;
+    items = items.filter(function (x) { return x.id !== id; });
+    save(); render();
+  }
+
+  function renderSubjects() {
+    var subs = [];
+    items.forEach(function (it) { if (subs.indexOf(it.subject) < 0) subs.push(it.subject); });
+    subs.sort();
+    var dl = document.getElementById("subjectList");
+    dl.innerHTML = subs.map(function (s) { return '<option value="' + esc(s) + '">'; }).join("");
+    var sel = document.getElementById("fSubjFilter");
+    var current = view.subject;
+    sel.innerHTML = '<option value="all">All subjects</option>' +
+      subs.map(function (s) { return '<option value="' + esc(s) + '">' + esc(s) + '</option>'; }).join("");
+    if (subs.indexOf(current) < 0) current = "all";
+    sel.value = current;
+    view.subject = current;
+  }
+
+  function renderStats() {
+    var today = todayStr(), week = plusDays(7);
+    var open = 0, soon = 0, over = 0;
+    items.forEach(function (it) {
+      if (it.done) return;
+      open++;
+      if (it.due && it.due < today) over++;
+      else if (it.due && it.due <= week) soon++;
+    });
+    document.getElementById("statOpen").textContent = open;
+    document.getElementById("statWeek").textContent = soon;
+    document.getElementById("statOver").textContent = over;
+  }
+
+  function render() {
+    renderSubjects();
+    renderStats();
+    var today = todayStr();
+    var list = items.filter(function (it) {
+      if (view.status === "open" && it.done) return false;
+      if (view.status === "done" && !it.done) return false;
+      if (view.subject !== "all" && it.subject !== view.subject) return false;
+      return true;
+    });
+    list.sort(function (a, b) {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (!a.due && !b.due) return 0;
+      if (!a.due) return 1;
+      if (!b.due) return -1;
+      return a.due < b.due ? -1 : a.due > b.due ? 1 : 0;
+    });
+
+    var box = document.getElementById("list");
+    if (!list.length) {
+      box.innerHTML = '<p class="empty">Nothing here yet. Add your first assignment, test, or missed class above.</p>';
+      return;
+    }
+    box.innerHTML = list.map(function (it) {
+      var overdue = it.due && !it.done && it.due < today;
+      var dueText = it.due ? "Due " + esc(it.due) : "No due date";
+      var tags = '<span class="tag">' + esc(it.subject) + '</span><span class="tag">' + esc(it.type) + '</span>';
+      if (it.priority === "high") tags += '<span class="tag high">High priority</span>';
+      if (it.type === "Missed class") tags += '<span class="tag missed">Catch-up</span>';
+      return '<div class="item">' +
+        '<input type="checkbox" id="c-' + it.id + '" data-id="' + it.id + '" data-act="toggle"' + (it.done ? " checked" : "") +
+          ' aria-label="Mark ' + esc(it.title) + ' as ' + (it.done ? "not done" : "done") + '">' +
+        '<div class="body">' +
+          '<div class="title' + (it.done ? " done" : "") + '">' + esc(it.title) + '</div>' +
+          '<div class="meta"><span class="' + (overdue ? "overdue" : "") + '">' + (overdue ? "Overdue: " : "") + dueText + '</span></div>' +
+          '<div class="meta">' + tags + '</div>' +
+          (it.notes ? '<div class="notes">' + esc(it.notes) + '</div>' : "") +
+        '</div>' +
+        '<button class="ghost" data-id="' + it.id + '" data-act="delete" aria-label="Delete ' + esc(it.title) + '">Delete</button>' +
+      '</div>';
+    }).join("");
+  }
+
+  document.getElementById("addBtn").addEventListener("click", addItem);
+  document.getElementById("fTitle").addEventListener("keydown", function (e) { if (e.key === "Enter") addItem(); });
+  document.getElementById("fStatus").addEventListener("change", function (e) { view.status = e.target.value; render(); });
+  document.getElementById("fSubjFilter").addEventListener("change", function (e) { view.subject = e.target.value; render(); });
+  document.getElementById("list").addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.getAttribute("data-act") === "delete") remove(t.getAttribute("data-id"));
+    if (t.getAttribute("data-act") === "toggle") toggle(t.getAttribute("data-id"));
+  });
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
